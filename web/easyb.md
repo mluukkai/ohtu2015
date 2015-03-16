@@ -151,7 +151,7 @@ and-osan voi liittää myös when-askeleeseen.
 
 Kun ajamme testit ja skenaarioihin ei liity mäppäystä testikoodiin, ilmoitetaan testien olevan "pending"-tilassa, eli ei läpi mutta ei myöskään feilanneena.
 
-Testit mäpätään ajettavaan koodiin kirjoittamalla kunkin skenaarion askeleen kohdalle lohko, johon tulee askelta vastaava testikoodi. Testikoodi kirjoitetaan Groovy-kielellä. [Groovyn](http://groovy.codehaus.org/) voi ajatella olevan "laiskasti kirjoitettua Javaa", eli esim puolipisteitä ei tarvita, muuttujien tyyppejä ei määritellä jne.
+Testit mäpätään ajettavaan koodiin kirjoittamalla kunkin skenaarion askeleen kohdalle lohko, johon tulee askelta vastaava testikoodi. Testikoodi kirjoitetaan Groovy-kielellä. [Groovyn](http://groovy-lang.org/) voi ajatella olevan "laiskasti kirjoitettua Javaa", eli esim puolipisteitä ei tarvita, muuttujien tyyppejä ei määritellä jne.
 
 Seuraavassa esimerkki skenaarion __"user can login with correct password"__ mäppäämisestä ajettavaan koodin:
 
