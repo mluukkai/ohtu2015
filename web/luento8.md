@@ -46,16 +46,16 @@ public void populate() throws Exception {
         c.close();
     }
 }
- 
+
 private ResultSet createResultSet(Connection c)throws SQLException {
     return c.createStatement().
             executeQuery(SQL_SELECT_PARTS);
 }
- 
+
 private Connection getDatabaseConnection() throws ClassNotFoundException, SQLException {
     return DriverManager.getConnection(DB_URL,"webuser", "webpass");
 }
- 
+
 private void addPartToListFromResultSet(ResultSet rs) throws SQLException {
     Part p = new Part();
     p.setName(rs.getString("name"));
@@ -75,32 +75,32 @@ Kurssin alussa tarkastelimme yksinkertaista laskinta:
 
 ``` java
 public class Laskin {
- 
+
     private Scanner lukija;
- 
+
     public Laskin() {
         lukija = new Scanner(System.in);
     }
- 
+
     public void suorita(){
         while( true ) {
             System.out.print("luku 1: ");
             int luku1 = lukija.nextInt();
             if ( luku1==-9999  ) return;
- 
+
             System.out.print("luku 2: ");
             int luku2 = lukija.nextInt();
             if ( luku2==-9999  ) return;
- 
+
             int vastaus = laskeSumma(luku1, luku2);
             System.out.println("summa: "+ vastaus);
         }
     }
- 
+
     private int laskeSumma(int luku1, int luku2) {
         return luku1+luku2;
     }
- 
+
 }
 ```
 
@@ -116,29 +116,29 @@ public interface IO {
     int nextInt();
     void print(String m);
 }
- 
+
 public class Laskin {
     private IO io;
- 
+
     public Laskin(IO io) {
         this.io = io;
     }
- 
+
     public void suorita(){
         while( true ) {
             io.print("luku 1: ");
             int luku1 = io.nextInt();
             if ( luku1==-9999  ) return;
- 
+
             io.print("luku 2: ");
             int luku2 = io.nextInt();
             if ( luku2==-9999 ) return;
- 
+
             int vastaus = laskeSumma(luku1, luku2);
             io.print("summa: "+vastaus+"\n");
         }
     }
- 
+
     private int laskeSumma(int luku1, int luku2) {
         return luku1+luku2;
     }
@@ -161,22 +161,22 @@ public class Tili {
     private String omistaja;
     private double saldo;
     private double korkoProsentti;
- 
+
     public Tili(String tiliNumero, String omistaja, double korkoProsentti) {
         this.tiliNumero = tiliNumero;
         this.omistaja = omistaja;
         this.korkoProsentti = korkoProsentti;
     }
- 
+
     public boolean siirraRahaaTililta(Tili tilille, double summa){
         if ( this.saldo<summa ) return false;
- 
+
         this.saldo -= summa;
         tilille.saldo += summa;
- 
+
         return true;
     }
- 
+
     public void maksaKorko(){
         saldo += saldo*korkoProsentti*100;
     }
@@ -188,17 +188,17 @@ Huomaamme, että tulee tarve toisentyyppiselle tilille joko 1, 3, 6 tai 12 kuuka
 ``` java
 public class EuriborTili extends Tili {
     private int kuukauden;
- 
+
     public EuriborTili(String tiliNumero, String omistaja, int kuukauden) {
         super(tiliNumero, omistaja, 0);
         this.kuukauden = kuukauden;
     }
- 
+
     @Override
     public void maksaKorko() {
         saldo += saldo*korko()*100;
     }
- 
+
     private double korko() {
         Scanner lukija = null;
         double korko = 0;
@@ -206,12 +206,12 @@ public class EuriborTili extends Tili {
             lukija = new Scanner(new URL("http://www.suomenpankki.fi/fi/_layouts/BOF/RSS.ashx/tilastot/Korot/fi").openStream());
         } catch (Exception e) {
         }
- 
+
         String sisalto = lukija.nextLine();
- 
+
         for (String rivi : sisalto.split("Reutersin ilmoittama")) {
             String osa = rivi.split("%")[0];
- 
+
             try {
                 if (osa.contains(kuukauden + " kuukauden")) {
                     korko = Double.parseDouble(osa.substring(osa.length() - 6, osa.length()).replace(',', '.'));
@@ -220,7 +220,7 @@ public class EuriborTili extends Tili {
             } catch (Exception e) {
             }
         }
- 
+
         return korko;
     }
 }
@@ -232,29 +232,29 @@ Huomaamme, että EuriborTili rikkoo Single Responsibility -periaatetta, sillä l
 public interface EuriborLukija {
     double korko();
 }
- 
+
 public class EuriborTili extends Tili {
     private EuriborLukija euribor;
- 
+
     public EuriborTili(String tiliNumero, String omistaja, int kuukauden) {
         super(tiliNumero, omistaja, 0);
         euribor = new EuriborlukijaImpl(kuukauden);
     }
- 
+
     @Override
     public void maksaKorko() {
         saldo += saldo*euribor.korko()*100;
     }
- 
+
 }
- 
+
 public class EuriborlukijaImpl implements EuriborLukija {
     private int kuukauden;
- 
+
     public EuriborlukijaImpl(int kuukauden) {
         this.kuukauden = kuukauden;
     }
- 
+
     @Override
     public double korko() {
         Scanner lukija = null;
@@ -263,12 +263,12 @@ public class EuriborlukijaImpl implements EuriborLukija {
             lukija = new Scanner(new URL("http://www.suomenpankki.fi/fi/_layouts/BOF/RSS.ashx/tilastot/Korot/fi").openStream());
         } catch (Exception e) {
         }
- 
+
         String sisalto = lukija.nextLine();
- 
+
         for (String rivi : sisalto.split("Reutersin ilmoittama")) {
             String osa = rivi.split("%")[0];
- 
+
             try {
                 if (osa.contains(kuukauden + " kuukauden")) {
                     korko = Double.parseDouble(osa.substring(osa.length() - 6, osa.length()).replace(',', '.'));
@@ -277,7 +277,7 @@ public class EuriborlukijaImpl implements EuriborLukija {
             } catch (Exception e) {
             }
         }
- 
+
         return korko;
     }
 }
@@ -290,24 +290,24 @@ Seuraavaksi huomaamme että on tarvetta Määräaikaistilille joka on muuten sam
 ``` java
 public class MääräaikaisTili extends Tili {
     private boolean nostokielto;
- 
+
     public MääräaikaisTili(String tiliNumero, String omistaja, double korkoProsentti) {
         super(tiliNumero, omistaja, korkoProsentti);
         nostokielto = true;
     }
- 
+
     public void salliNosto(){
         nostokielto = false;
     }
- 
+
     @Override
     public boolean siirraRahaaTililta(Tili tilille, double summa) {
         if ( nostokielto )
             return false;
- 
+
         return super.siirraRahaaTililta(tilille, summa);
     }
- 
+
 }
 ```
 
@@ -321,26 +321,26 @@ Ehkä koronmaksun hoitaminen perinnän avulla ei ollutkaan paras ratkaisu, ja ka
 public interface Korko {
     double korko();
 }
- 
+
 public class Tasakorko implements Korko {
     private double korko;
- 
+
     public Tasakorko(double korko) {
         this.korko = korko;
     }
- 
+
     public double korko() {
         return korko;
     }
 }
- 
+
 public class EuriborKorko implements Korko {
     EuriborLukija lukija;
- 
+
     public EuriborKorko(int kuukausi) {
         lukija = new EuriborlukijaImpl(kuukausi);
     }
- 
+
     public double korko() {
         return korko();
     }
@@ -355,22 +355,22 @@ public class Tili {
     private String omistaja;
     private double saldo;
     private Korko korko;
- 
+
     public Tili(String tiliNumero, String omistaja, Korko korko) {
         this.tiliNumero = tiliNumero;
         this.omistaja = omistaja;
         this.korko = korko;
     }
- 
+
     public boolean siirraRahaaTililta(Tili tilille, double summa){
         if ( this.saldo<summa ) return false;
- 
+
         this.saldo -= summa;
         tilille.saldo += summa;
- 
+
         return true;
     }
- 
+
     public void maksaKorko(){
         saldo += saldo*korko.korko()*100;
     }
@@ -388,32 +388,32 @@ Muutetaan luokkaa vielä siten, että tilejä saadaan luotua ilman konstruktoria
 
 ``` java
 public class Tili {
- 
+
     private String tiliNumero;
     private String omistaja;
     private double saldo;
     private Korko korko;
- 
+
     public static Tili luoEuriborTili(String tiliNumero, String omistaja, int kuukausia) {
         return new Tili(tiliNumero, omistaja, new EuriborKorko(kuukausia));
     }
- 
+
     public static Tili luoMääräaikaisTili(String tiliNumero, String omistaja, double korko) {
         return new MääräaikaisTili(tiliNumero, omistaja, new Tasakorko(korko));
     }
- 
+
     public static Tili luoKäyttöTili(String tiliNumero, String omistaja, double korko) {
         return new Tili(tiliNumero, omistaja, new Tasakorko(korko));
     }
- 
+
     protected Tili(String tiliNumero, String omistaja, Korko korko) {
         this.tiliNumero = tiliNumero;
         this.omistaja = omistaja;
         this.korko = korko;
     }
- 
+
     // ...
- 
+
     public void vaihdaKorkoa(Korko korko) {
         this.korko = korko;
     }
@@ -448,13 +448,13 @@ Olemme laajentaneet Laskin-luokkaa osaamaan myös muita laskuoperaatioita:
 
 ``` java
 public class Laskin {
- 
+
     private IO io;
- 
+
     public Laskin(IO io) {
         this.io = io;
     }
- 
+
     public void suorita() {
         while (true) {
             io.print("komento: ");
@@ -462,15 +462,15 @@ public class Laskin {
             if (komento.equals("lopetus")) {
                 return;
             }
- 
+
             io.print("luku 1: ");
             int luku1 = io.nextInt();
- 
+
             io.print("luku 2: ");
             int luku2 = io.nextInt();
- 
+
             int vastaus = 0;
- 
+
             if ( komento.equals("summa") ){
                 vastaus = laskeSumma(luku1, luku2);
             } else if ( komento.equals("tulo") ){
@@ -478,19 +478,19 @@ public class Laskin {
             } else if ( komento.equals("erotus") ){
                 vastaus = laskeErotus(luku1, luku2);
             }
- 
+
             io.print("summa: " + vastaus + "\n");
         }
     }
- 
+
     private int laskeSumma(int luku1, int luku2) {
         return luku1 + luku2;
     }
- 
+
     private int laskeTulo(int luku1, int luku2) {
         return luku1 * luku2;
     }
- 
+
     private int laskeErotus(int luku1, int luku2) {
         return luku1-luku2;
     }
@@ -503,15 +503,15 @@ Päätämme siirtyä strategian käyttöön, eli hoidetaan laskuoperaatio omassa
 
 ``` java
 public abstract class Operaatio {
- 
+
     protected int luku1;
     protected int luku2;
- 
+
     public Operaatio(int luku1, int luku2) {
         this.luku1 = luku1;
         this.luku2 = luku2;
     }
- 
+
     public static Operaatio luo(String operaatio, int luku1, int luku2) {
         if (operaatio.equals("summa")) {
             return new Summa(luku1, luku2);
@@ -520,40 +520,40 @@ public abstract class Operaatio {
         }
         return new Erotus(luku1, luku2);
     }
- 
+
     public abstract int laske();
 }
- 
+
 public class Summa extends Operaatio {
- 
+
     public Summa(int luku1, int luku2) {
         super(luku1, luku2);
     }
- 
+
     @Override
     public int laske() {
         return luku1 + luku2;
     }
 }
- 
+
 public class Tulo extends Operaatio {
- 
+
     public Tulo(int luku1, int luku2) {
         super(luku1, luku2);
     }
- 
+
     @Override
     public int laske() {
         return luku1 * luku2;
     }
 }
- 
+
 public class Erotus extends Operaatio {
- 
+
     public Erotus(int luku1, int luku2) {
         super(luku1, luku2);
     }
- 
+
     @Override
     public int laske() {
         return luku1 - luku2;
@@ -565,13 +565,13 @@ Laskin-luokka yksinkertaistuu huomattavasti:
 
 ``` java
 public class Laskin {
- 
+
     private IO io;
- 
+
     public Laskin(IO io) {
         this.io = io;
     }
- 
+
     public void suorita() {
         while (true) {
             io.print("komento: ");
@@ -579,15 +579,15 @@ public class Laskin {
             if (komento.equals("lopetus")) {
                 return;
             }
- 
+
             io.print("luku 1: ");
             int luku1 = io.nextInt();
- 
+
             io.print("luku 2: ");
             int luku2 = io.nextInt();
- 
+
             Operaatio operaatio = Operaatio.luo(komento, luku1, luku2);
- 
+
             io.print("summa: " + operaatio.laske() + "\n");
         }
     }
@@ -616,13 +616,13 @@ Komento-olioita luova komentotehdas on seuraavassa:
 
 ``` java
 public class Komentotehdas {
- 
+
     private IO io;
- 
+
     public Komentotehdas(IO io) {
         this.io = io;
     }
- 
+
     public Komento hae(String operaatio) {
         if (operaatio.equals("summa")) {
             return new Summa(io);
@@ -644,7 +644,7 @@ if-hässäkkä näyttää hieman ikävältä. Mutta hetkinen! Voisimme tallentaa
 ``` java
 public class Komentotehdas {
     private HashMap<String, Komento> komennot;
- 
+
     public Komentotehdas(IO io) {
         komennot = new HashMap<String, Komento>();
         komennot.put("summa", new Summa(io));
@@ -652,7 +652,7 @@ public class Komentotehdas {
         komennot.put("nelio", new Nelio(io));
         komennot.put("tuntematon", new Tuntematon(io));
     }
- 
+
     public Komento hae(String operaatio) {
         Komento komento = komennot.get(operaatio);
         if (komento == null) {
@@ -670,46 +670,46 @@ Yksittäiset komennot ovat hyvin yksinkertaisia:
 ``` java
 public class Nelio implements Komento {
     private IO io;
- 
+
     public Nelio(IO io) {
         this.io = io;
     }
- 
+
     @Override
     public void suorita() {
         io.print("luku 1: ");
         int luku = io.nextInt();
- 
+
         io.print("vastaus: "+luku*luku);
     }
 }
- 
+
 public class Tuntematon implements Komento {
     private IO io;
- 
+
     public Tuntematon(IO io) {
         this.io = io;
     }
- 
+
     @Override
     public void suorita() {
         io.print("sallitut komennot: summa, tulo, nelio, lopeta");
     }
 }
- 
+
 public class Lopeta implements Komento {
     private IO io;
- 
+
     public Lopeta(IO io) {
         this.io = io;
     }
- 
+
     @Override
     public void suorita() {
         io.print("kiitos ja näkemiin");
         System.exit(0);
     }
- 
+
 }
 ```
 
@@ -717,47 +717,47 @@ Koska kaksi parametria käyttäjältä kysyvillä komennoilla on paljon yhteist�
 
 ``` java
 public abstract class KaksiparametrinenLaskuoperaatio implements Komento {
- 
+
     protected IO io;
     protected int luku1;
     protected int luku2;
- 
+
     public KaksiparametrinenLaskuoperaatio(IO io) {
         this.io = io;
     }
- 
+
     @Override
     public void suorita() {
         io.print("luku 1: ");
         int luku1 = io.nextInt();
- 
+
         io.print("luku 2: ");
         int luku2 = io.nextInt();
- 
+
         io.print("vastaus: "+laske());
     }
- 
+
     protected abstract int laske();
 }
- 
+
 public class Summa extends KaksiparametrinenLaskuoperaatio {
- 
+
     public Summa(IO io) {
         super(io);
     }
- 
+
     @Override
     protected int laske() {
         return luku1+luku2;
     }
 }
- 
+
 public class Tulo extends KaksiparametrinenLaskuoperaatio {
- 
+
     public Tulo(IO io) {
         super(io);
     }
- 
+
     @Override
     public int laske() {
         return luku1*luku2;
@@ -769,15 +769,15 @@ Ja lopulta luokka Laskin, jossa ei ole enää juuri mitään jäljellä:
 
 ``` java
 public class Laskin {
- 
+
     private IO io;
     private Komentotehdas komennot;
- 
+
     public Laskin(IO io) {
         this.io = io;
         komennot = new Komentotehdas(io);
     }
- 
+
     public void suorita() {
         while (true) {
             io.print("komento: ");
@@ -800,9 +800,9 @@ Tarkastellaan [Project Gutenbergistä](http://www.gutenberg.org/) löytyvien kir
 
 ``` java
 public class GutenbergLukija {
-    
+
     private List<String> rivit;
-    
+
     public GutenbergLukija(String osoite) throws IllegalArgumentException {
         rivit = new ArrayList<String>();
         try {
@@ -816,40 +816,40 @@ public class GutenbergLukija {
             throw new IllegalArgumentException(e);
         }
     }
-    
+
     public List<String> rivit() {
         List<String> palautettavat = new ArrayList<>();
-        
+
         for (String rivi : rivit) {
             palautettavat.add(rivi);
         }
-        
+
         return palautettavat;
     }
-    
+
     public List<String> rivitJotkaPaattyvatHuutomerkkiin() {
         List<String> ehdonTayttavat = new ArrayList<>();
-        
+
         for (String rivi : rivit) {
             if (rivi.endsWith("!")) {
                 ehdonTayttavat.add(rivi);
             }
         }
-        
+
         return ehdonTayttavat;
     }
-    
+
     public List<String> rivitJoillaSana(String sana) {
         List<String> ehdonTayttavat = new ArrayList<String>();
-        
+
         for (String rivi : rivit) {
             if (rivi.contains(sana)) {
                 ehdonTayttavat.add(rivi);
             }
         }
-        
+
         return ehdonTayttavat;
-    }  
+    }
 }
 ```
 
@@ -884,7 +884,7 @@ Esimerkissä lambdan syntaksi oli seuraava:
 
 ``` java
     s->System.out.println(s)
-``` 
+```
 
 parametri <code>s</code> saa arvokseen yksi kerrallaan kunkin läpikäytävän tekstirivin. Riveille suoritetaan "nuolen" oikealla puolella oleva tulostuskomento. Lisää lambdan syntaksista [täältä](http://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html). Huomionarvoista on se, että lambdan parametrin eli muuttujan <code>s</code> tyyppiä ei tarvitse määritellä, kääntäjä osaa päätellä sen iteroitavana olevan kokoelman perusteella.
 
@@ -900,7 +900,7 @@ public interface Ehto {
 
 Huom: metodin nimen valinta ei ollut täysin sattumanvarainen. Tulemme myöhemmin määrittelemään, että rajapinta <code>Ehto</code> laajentaa rajapinnan, joka vaatii että rajapinnalla on nimenomaan <code>test</code>-niminen metodi.
 
-Ideana on luoda jokaista kirjojen erilaista _hakuehtoa_ kohti oma rajapinnan <code>Ehto</code> toteuttava luokka. 
+Ideana on luoda jokaista kirjojen erilaista _hakuehtoa_ kohti oma rajapinnan <code>Ehto</code> toteuttava luokka.
 
 Seuraavassa ehto-luokka, joka tarkastaa sisältyykö tietty sana riville:
 
@@ -941,13 +941,13 @@ Kirjasta voidaan nyt palauttaa oikean ehdon täyttävät sanat lisäämällä lu
 ``` java
     public List<String> rivitJotkaTayttavatEhdon(Ehto ehto) {
         List<String> palautettavatRivit = new ArrayList<>();
-        
+
         for (String rivi : rivit) {
             if (ehto.test(rivi)) {
                 palautettavatRivit.add(rivi);
             }
         }
-        
+
         return palautettavatRivit;
     }
 ```
@@ -972,7 +972,7 @@ Lambdojen avulla on helppoa määritellä mielivaltaisia ehtoja. Seuraavassa tul
 
 ``` java
     Ehto ehto = s -> s.contains("beer") || s.contains("vodka");
-        
+
     kirja.rivitJotkaTayttavatEhdon(ehto).forEach(s->System.out.println(s));
 ```
 
@@ -983,20 +983,20 @@ Metodi on tällä hetkellä seuraava:
 ``` java
     public List<String> rivitJotkaTayttavatEhdon(Ehto ehto) {
         List<String> palautettavatRivit = new ArrayList<>();
-        
+
         for (String rivi : rivit) {
             if (ehto.test(rivi)) {
                 palautettavatRivit.add(rivi);
             }
         }
-        
+
         return palautettavatRivit;
     }
 ```
 
 Java 8:ssa kaikki rajapinnan <code>Collection</code> toteuttavat luokat mahdollistavat alkioidensa käsittelyn <code>Stream</code>:ina eli "alkiovirtoina", ks. [API-kuvaus](http://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html). Kokoelmaluokasta saadaan sitä vastaava alkiovirta kutsumalla kokoelmalle metodia <code>stream</code>.
 
-Alkiovirtoja on taas mahdollista käsitellä monin tavoin, ja meitä nyt kiinnostava metodi on <code>filter</code>, jonka avulla streamistä voidaan tehdä uusi streami, josta on poistettu ne alkiot, jotka eivät täytä filtterille annettua boolean-arvoista, funktionaalisen rajapinnan <code>Predicate<String></code> toteuttavaa ehtoa. 
+Alkiovirtoja on taas mahdollista käsitellä monin tavoin, ja meitä nyt kiinnostava metodi on <code>filter</code>, jonka avulla streamistä voidaan tehdä uusi streami, josta on poistettu ne alkiot, jotka eivät täytä filtterille annettua boolean-arvoista, funktionaalisen rajapinnan <code>Predicate<String></code> toteuttavaa ehtoa.
 
 Määrittelemämme rajapinta <code>Ehto</code> on oikeastaan juuri tarkoitukseen sopiva, jotta voisimme käyttää rajapintaa, tulee meidän kuitenkin tyyppitarkastusten takia määritellä että rajapintamme laajentaa rajapintaa  <code>Predicate<String></code>:
 
@@ -1018,7 +1018,7 @@ Nyt saamme muutettua kirjan rivien streamin _ehdon_ täyttävien rivien streamik
     }
 ```
 
-Metodin tulee palauttaa filtteröidyn streamin alkioista koostuva lista. Stream saadaan muutettua listaksi "keräämällä" sen sisältämät alkiot kutsumalla streamille metodia <code>collect</code> ja määrittelemällä, että palautetaan streamin sisältämät alkiot niemenomaan listana. Näin luotu filtteröity lista voidaan sitten palauttaa metodin kutsujalle. 
+Metodin tulee palauttaa filtteröidyn streamin alkioista koostuva lista. Stream saadaan muutettua listaksi "keräämällä" sen sisältämät alkiot kutsumalla streamille metodia <code>collect</code> ja määrittelemällä, että palautetaan streamin sisältämät alkiot niemenomaan listana. Näin luotu filtteröity lista voidaan sitten palauttaa metodin kutsujalle.
 
 Metodi on siis seuraavassa:
 
@@ -1028,4 +1028,4 @@ Metodi on siis seuraavassa:
     }
 ```
 
-Kuten huomaamme, Javan version 8 tarjoamat funktionaaliset piirteet muuttavat lähes vallankumouksellisella tavalla kielen ilmaisuvoimaa! 
+Kuten huomaamme, Javan version 8 tarjoamat funktionaaliset piirteet muuttavat lähes vallankumouksellisella tavalla kielen ilmaisuvoimaa!
