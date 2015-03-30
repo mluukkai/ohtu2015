@@ -1029,3 +1029,263 @@ Metodi on siis seuraavassa:
 ```
 
 Kuten huomaamme, Javan version 8 tarjoamat funktionaaliset piirteet muuttavat lähes vallankumouksellisella tavalla kielen ilmaisuvoimaa!
+
+
+## Komposiitti
+
+Dokumentti koostuu erilaisista elementeistä. Elementtejä ovat mm.
+
+* normaalit tekstielementit
+* erotinelementit, erotin tulostuu viivana
+* kooste-elementit
+  * sisältävät listan elementtejä
+  * kooste tulostuu samoin kuin sen sisältämän elementtilistan elementit tulostuvat
+
+Haluamme käyttää dokumenttia seuraavaan tapaan:
+
+``` java
+public static void main(String[] args) {
+    Dokumentti doku = new Dokumentti();
+
+    Elementti detalji = Elementtitehdas.kooste(
+            Elementtitehdas.teksti("kannattaa myös huomata builderi"),
+            Elementtitehdas.teksti("sopii joihinkin tilanteisiin factoryä paremmin"));
+
+
+    Elementti asiaa = Elementtitehdas.kooste(
+            Elementtitehdas.teksti("Factory-metodit helpottavat olioiden luomista"),
+            Elementtitehdas.teksti("ei tarvetta new:lle ja konkreettiset riippuvuudet vähenevät"),
+            detalji);
+
+    doku.lisaa(Elementtitehdas.teksti("Suunnittelumallit"));
+    doku.lisaa(Elementtitehdas.erotin());
+    doku.lisaa(asiaa);
+    doku.lisaa(Elementtitehdas.teksti("yhteenvetona voidaan todeta, että kannattaa käyttää"));
+    doku.lisaa(Elementtitehdas.erotin());
+
+    doku.print();
+    doku.tallenna("suunnittelumallit.txt");
+}
+```
+
+Tulostuu:
+
+<pre>
+Suunnittelumallit
+-------------------------
+Factory-metodit helpottavat olioiden luomista
+ei tarvetta new:lle ja konkreettiset riippuvuudet vähenevät
+kannattaa myös huomata builderi
+sopii joihinkin tilanteisiin factoryä paremmin
+yhteenvetona voidaan todeta, että kannattaa käyttää
+-------------------------
+</pre>
+
+Luokka Dokumentti on suoraviivainen:
+
+``` java
+public class Dokumentti {
+    private List<Elementti> elementit;
+
+    public Dokumentti() {
+        elementit = new ArrayList<Elementti>();
+    }
+
+    public void lisaa(Elementti elementti){
+        elementit.add(elementti);
+    }
+
+    public void print(){
+        for (Elementti elementti : elementit) {
+            elementti.tulosta();
+        }
+    }
+
+    public void tallenna(String tiedosto){
+        // to be implemented
+    }
+}
+```
+
+Käyttäjää varten on siis luotu elementtitehdas jonka avulla elementtejä voidaan muodostaa:
+
+``` java
+public class Elementtitehdas {
+    public static Elementti erotin(){
+        return new ErotinElementti();
+    }
+
+    public static Elementti teksti(String teksti){
+        return new TekstiElementti(teksti);
+    }
+
+    public static Elementti kooste(Elementti... elementit){
+        return new KoosteElementti(elementit);
+    }
+}
+```
+Ainoa huomionarvoinen seikka on viimeisen rakentajametodin varargs-tyyppinen parametri, jos se ei ole tuttu, ks esim: [http://www.javadb.com/using-varargs-in-java](http://www.javadb.com/using-varargs-in-java)
+
+Käytännössä varargs-parametri tarkoittaa, että metodilla saa olla Elementti-tyyppisiä parametreja vapaavalintainen määrä.
+
+Dokumentin sisältävien elementtien toteuttamiseen sopii erinomaisesti *komposiitti (engl composite) -suunnittelumalli*, ks. esim. [http://sourcemaking.com/design_patterns/composite](http://sourcemaking.com/design_patterns/composite)
+
+Elementti on rajapinta joka määrittelee kaikkien elementtien yhteisen toiminnallisuuden:
+
+``` java
+public interface Elementti {
+    void tulosta();
+}
+```
+
+Yksinkertaiset elementit ovat triviaaleja:
+
+``` java
+public class ErotinElementti implements Elementti{
+
+    public void tulosta() {
+        System.out.println("-------------------------");
+    }
+
+}
+
+public class TekstiElementti implements Elementti {
+
+    String teksti;
+
+    public TekstiElementti(String teksti) {
+        this.teksti = teksti;
+    }
+
+    public void tulosta() {
+        System.out.println(teksti);
+    }
+}
+```
+
+KoosteElementti sisältää listan elementtejä, lista annetaan konstruktorin parametrina, jälleen varargsia hyödyntäen. Kooste tulostaa itsensä pyytämällä kaikkia osiaan tulostumaan:
+
+``` java
+public class KoosteElementti implements Elementti {
+    private List<Elementti> osat;
+
+    public KoosteElementti(Elementti... osat) {
+        this.osat = new ArrayList<Elementti>(Arrays.asList(osat));
+    }
+
+    public void tulosta() {
+        for (Elementti osa : osat) {
+            osa.tulosta();
+        }
+    }
+
+}
+```
+
+Koska KoosteElementti toteuttaa itsekin rajapinnan Elementti, tarkoittaa tämä että kooste voi sisältää koosteita. Eli hyvin yksinkertaisella luokkarakenteella saadaan aikaan mielivaltaisista puumaisesti muodostuneista elementeistä koostuvia dokumentteja!
+
+Huomaamme, että <code>Elementti</code> on _funktionaalinen rejapinta_ eli se määrittelee ainoastaan yhden sen metodin joka rajapinnan toteuttavien luokkien on toteutettava. Kuten [edellisellä viikolla ](https://github.com/mluukkai/ohtu2014/blob/master/web/luento8.md#koodissa-olevan-ep%C3%A4triviaalin-copypasten-poistaminen-strategy-patternin-avulla-java-8a-hy%C3%B6dynt%C3%A4v%C3%A4-versio) totesimme Java 8:ssa voimme käyttää lambda-lausekkeita korvaamaan funktionaalisen rajapinnan toteuttavien luokkien instanssien tilalla. Koska luokat <code>TekstiElementti</code>, <code>ErotinElementti</code> ja <code>KoosteElementti</code> ovat niin yksinkertaisia, ei luokkia välttämättä tarvitse määritellä eksplisiittisesti. Voimmekin palauttaa elementtitehtaasta niiden tilalla sopivat lambda-lausekkeen avulla määritellyt elementit:
+
+``` java
+public class Elementtitehdas {
+    public static Elementti erotin(){
+        return ()->{ System.out.println("-------------------------"); };
+    }
+
+    public static Elementti teksti(String teksti){
+        return ()->{ System.out.println(teksti); };
+    }
+
+    public static Elementti kooste(Elementti... elementit){
+        return () -> { Stream.of(elementit).forEach(e->e.tulosta()); };
+    }
+}
+```
+
+Riittää siis että kukin tehdasmetodi palauttaa lambda-lausekkeen, joka määrittelee kyseessä olevan elementin metodin <code>tulosta</code> toiminnallisuuden.
+
+## Proxy
+
+Oletetaan että asiakas haluaa elementtityypin WebElementti joka kapseloi tietyssä www-osoitteessa olevan sisällön. Ei ongelmaa:
+
+``` java
+public class WebElementti implements Elementti {
+
+    private String source;
+
+    public WebElementti(String url) {
+        try {
+            Scanner lukija = new Scanner(new URL(url).openStream());
+            while( lukija.hasNextLine()) {
+                source+= lukija.nextLine();
+            }
+        } catch (Exception e) {
+            source = "page "+url+" does not exist";
+        }
+    }
+
+    public void tulosta() {
+        System.out.println(source);
+    }
+}
+```
+
+Hieman ruma koodi (konstruktori tekee vähän liian monta asiaa), mutta toimii.
+
+Laajentamalla elementtitehdasta sopivasti pääsemme käyttämään dokumentin uusia ominaisuuksia:
+
+
+``` java
+public static void main(String[] args) {
+    Dokumentti doku = new Dokumentti();
+
+    doku.lisaa(Elementtitehdas.web("http://www.jatkoaika.fi"));
+    doku.lisaa(Elementtitehdas.web("http://olutopas.info/"));
+
+    doku.tallenna("webista.html");
+}
+```
+
+Asiaks toteaa, että hänellä on usein tarve koostaa "varalta" webelementtejä sisältäviä dokumentteja. Dokumenteista ei kuitenkaan todellisuudessa tarvita kuin muutamaa, niitä pitää olla kuitenkin määriteltynä valmiina suuria määriä.
+
+Ongelmaksi muodostuu nyt se, että elementtien lataaminen webistä on hidasta. Ja on ikävää jos elementtejä on pakko ladata suuria määriä kaiken varalta.
+
+Proxy-suunnittelumalli tuo ongelmaan ratkaisun. Periaatteena on luoda varsinaiselle "raskaalle" oliolle edustaja joka toimii raskaan olion sijalla niin kauan kunnes olioa oikeasti tarvitaan. Tälläisessä tilanteessa edustaja sitten luo todellisen olion ja delegoi sille kaikki operaatiot.
+
+Tehdään WebElementille proxy:
+
+
+``` java
+public class WebElementtiProxy implements Elementti {
+    private String url;
+    private WebElementti webElementti;
+
+    public WebElementtiProxy(String url) {
+        this.url = url;
+    }
+
+    public void tulosta() {
+        if ( webElementti==null ) {
+            webElementti = new WebElementti(url);
+        }
+        webElementti.tulosta();
+    }
+}
+```
+
+Eli proxy luo varsinaisen olion vasta kun metodia tulosta() kutsutaan ensimmäisen kerran.
+
+Elementtitehdas konfiguroidaan antamaan WebElementin käyttäjille proxy. Käyttäjät eivät eivät tiedä proxystä mitään ja luulevat käyttävänsä koko ajan täysimittaista olioa!
+
+
+``` java
+public class Elementtitehdas {
+    // ...
+
+    public static Elementti web(String url){
+        return new WebElementtiProxy(url);
+    }
+}
+```
+
+Asiakas on tyytyväinen aikaansaannokseemme.
